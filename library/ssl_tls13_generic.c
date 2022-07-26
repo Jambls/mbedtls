@@ -851,26 +851,26 @@ static int ssl_tls13_write_certificate_body( mbedtls_ssl_context *ssl,
         MBEDTLS_PUT_UINT24_BE( cert_data_len, p, 0 );
         p += 3;
 
-        // // memcpy( p, crt->raw.p, cert_data_len );
+        // memcpy( p, crt->raw.p, cert_data_len );
 
-        // // zlib struct
-        // z_stream defstream;
-        // defstream.zalloc = Z_NULL;
-        // defstream.zfree = Z_NULL;
-        // defstream.opaque = Z_NULL;
-        // // setup "a" as the input and "b" as the compressed output
-        // defstream.avail_in = (uInt)cert_data_len; // size of input, string + terminator
-        // defstream.next_in = (Bytef *)p; // input char array
-        // defstream.avail_out = (uInt)cert_data_len; // size of output
-        // defstream.next_out = (Bytef *)crt->raw.p; // output char array
+        // zlib struct
+        z_stream defstream;
+        defstream.zalloc = Z_NULL;
+        defstream.zfree = Z_NULL;
+        defstream.opaque = Z_NULL;
+        // setup "a" as the input and "b" as the compressed output
+        defstream.avail_in = (uInt)cert_data_len; // size of input, string + terminator
+        defstream.next_in = (Bytef *)p; // input char array
+        defstream.avail_out = (uInt)cert_data_len; // size of output
+        defstream.next_out = (Bytef *)crt->raw.p; // output char array
 
-        // // the actual compression work.
-        // deflateInit(&defstream, Z_BEST_COMPRESSION);
-        // deflate(&defstream, Z_FINISH);
-        // deflateEnd(&defstream);
+        // the actual compression work.
+        deflateInit(&defstream, Z_BEST_COMPRESSION);
+        deflate(&defstream, Z_FINISH);
+        deflateEnd(&defstream);
 
-        // printf('Pre-compression: %s', p);
-        // printf('Post-compression: %s', crt->raw.p);
+        printf('Pre-compression: %s', p);
+        printf('Post-compression: %s', crt->raw.p);
 
         p += cert_data_len;
         crt = crt->next;
