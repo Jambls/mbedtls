@@ -22,6 +22,7 @@
 #if defined(MBEDTLS_SSL_TLS_C) && defined(MBEDTLS_SSL_PROTO_TLS1_3)
 
 #include <string.h>
+#include "zlib.h"
 
 #include "mbedtls/error.h"
 #include "mbedtls/debug.h"
@@ -398,6 +399,29 @@ int mbedtls_ssl_tls13_parse_certificate( mbedtls_ssl_context *ssl,
     size_t certificate_list_len = 0;
     const unsigned char *p = buf;
     const unsigned char *certificate_list_end;
+
+    // copied input
+    const unsigned char *pre_compressed_cert
+    strcpy(buf, pre_compressed_cert)
+
+    // zlib struct
+    z_stream infstream;
+    infstream.zalloc = Z_NULL;
+    infstream.zfree = Z_NULL;
+    infstream.opaque = Z_NULL;
+    // setup "a" as the input and "b" as the compressed output
+    infstream.avail_in = (uInt)strlen(pre_compressed_cert)+1; // size of input, string + terminator
+    infstream.next_in = (Bytef *)pre_compressed_cert; // input char array
+    infstream.avail_out = (uInt)strlen(pre_compressed_cert)+1; // size of output
+    infstream.next_out = (Bytef *)p; // output char array
+
+    // the actual DE-compression work.
+    inflateInit(&infstream);
+    inflate(&infstream, Z_NO_FLUSH);
+    inflateEnd(&infstream);
+
+    printf('Pre-compression: %s', pre_compressed_cert);
+    printf('Post-compression: %s', p);
 
     MBEDTLS_SSL_CHK_BUF_READ_PTR( p, end, 4 );
     certificate_request_context_len = p[0];
@@ -827,7 +851,27 @@ static int ssl_tls13_write_certificate_body( mbedtls_ssl_context *ssl,
         MBEDTLS_PUT_UINT24_BE( cert_data_len, p, 0 );
         p += 3;
 
-        memcpy( p, crt->raw.p, cert_data_len );
+        // // memcpy( p, crt->raw.p, cert_data_len );
+
+        // // zlib struct
+        // z_stream defstream;
+        // defstream.zalloc = Z_NULL;
+        // defstream.zfree = Z_NULL;
+        // defstream.opaque = Z_NULL;
+        // // setup "a" as the input and "b" as the compressed output
+        // defstream.avail_in = (uInt)cert_data_len; // size of input, string + terminator
+        // defstream.next_in = (Bytef *)p; // input char array
+        // defstream.avail_out = (uInt)cert_data_len; // size of output
+        // defstream.next_out = (Bytef *)crt->raw.p; // output char array
+
+        // // the actual compression work.
+        // deflateInit(&defstream, Z_BEST_COMPRESSION);
+        // deflate(&defstream, Z_FINISH);
+        // deflateEnd(&defstream);
+
+        // printf('Pre-compression: %s', p);
+        // printf('Post-compression: %s', crt->raw.p);
+
         p += cert_data_len;
         crt = crt->next;
 
